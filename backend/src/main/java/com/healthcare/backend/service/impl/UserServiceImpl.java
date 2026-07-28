@@ -1,6 +1,9 @@
 package com.healthcare.backend.service.impl;
 
+import com.healthcare.backend.dto.request.UserRequestDTO;
+import com.healthcare.backend.dto.response.UserResponseDTO;
 import com.healthcare.backend.entity.User;
+import com.healthcare.backend.mapper.UserMapper;
 import com.healthcare.backend.repository.UserRepository;
 import com.healthcare.backend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,18 +18,33 @@ public class UserServiceImpl implements UserService {
     private UserRepository userRepository;
 
     @Override
-    public User registerUser(User user) {
-        return userRepository.save(user);
+    public UserResponseDTO registerUser(UserRequestDTO dto) {
+
+        User user = UserMapper.toEntity(dto);
+
+        User savedUser = userRepository.save(user);
+
+        return UserMapper.toResponseDTO(savedUser);
     }
 
     @Override
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserResponseDTO> getAllUsers() {
+
+        return userRepository.findAll()
+                .stream()
+                .map(UserMapper::toResponseDTO)
+                .toList();
     }
 
     @Override
-    public User getUserById(Long id) {
-        return userRepository.findById(id).orElse(null);
+    public UserResponseDTO getUserById(Long id) {
+
+        User user = userRepository.findById(id).orElse(null);
+
+        if(user == null)
+            return null;
+
+        return UserMapper.toResponseDTO(user);
     }
 
     @Override
