@@ -3,9 +3,11 @@ package com.healthcare.backend.service.impl;
 import com.healthcare.backend.dto.request.UserRequestDTO;
 import com.healthcare.backend.dto.response.UserResponseDTO;
 import com.healthcare.backend.entity.User;
+import com.healthcare.backend.exception.ResourceNotFoundException;
 import com.healthcare.backend.mapper.UserMapper;
 import com.healthcare.backend.repository.UserRepository;
 import com.healthcare.backend.service.UserService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +19,7 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private UserRepository userRepository;
 
+    // Register a new user
     @Override
     public UserResponseDTO registerUser(UserRequestDTO dto) {
 
@@ -27,6 +30,21 @@ public class UserServiceImpl implements UserService {
         return UserMapper.toResponseDTO(savedUser);
     }
 
+    // Get user by ID
+    @Override
+    public UserResponseDTO getUserById(Long id) {
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "User not found with id: " + id
+                        )
+                );
+
+        return UserMapper.toResponseDTO(user);
+    }
+
+    // Get all users
     @Override
     public List<UserResponseDTO> getAllUsers() {
 
@@ -36,19 +54,10 @@ public class UserServiceImpl implements UserService {
                 .toList();
     }
 
-    @Override
-    public UserResponseDTO getUserById(Long id) {
-
-        User user = userRepository.findById(id).orElse(null);
-
-        if(user == null)
-            return null;
-
-        return UserMapper.toResponseDTO(user);
-    }
-
+    // Delete user
     @Override
     public void deleteUser(Long id) {
+
         userRepository.deleteById(id);
     }
 }
