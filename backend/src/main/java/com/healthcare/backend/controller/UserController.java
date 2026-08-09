@@ -3,8 +3,12 @@ package com.healthcare.backend.controller;
 import com.healthcare.backend.dto.request.UserRequestDTO;
 import com.healthcare.backend.dto.response.UserResponseDTO;
 import com.healthcare.backend.service.UserService;
+
+import jakarta.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
@@ -16,7 +20,7 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/register")
-    public UserResponseDTO registerUser(@RequestBody UserRequestDTO dto) {
+    public UserResponseDTO registerUser(@Valid @RequestBody UserRequestDTO dto) {
 
         return userService.registerUser(dto);
     }
@@ -34,10 +38,18 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public String deleteUser(@PathVariable Long id) {
+    public ResponseEntity<String> deleteUser(@PathVariable Long id) {
 
         userService.deleteUser(id);
 
-        return "User deleted successfully";
+        return ResponseEntity.ok("User deleted successfully");
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<UserResponseDTO> updateUser(
+        @PathVariable Long id,
+        @Valid @RequestBody UserRequestDTO dto) {
+
+            return ResponseEntity.ok(userService.updateUser(id, dto));
     }
 }
