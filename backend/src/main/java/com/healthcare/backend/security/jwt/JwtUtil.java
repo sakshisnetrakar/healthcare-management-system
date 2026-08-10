@@ -16,16 +16,21 @@ public class JwtUtil {
 
     private final long expirationTime = 1000 * 60 * 60; // 1 hour
 
-    public String generateToken(String email) {
+
+    // Generate JWT with email + role
+    public String generateToken(String email, String role) {
 
         return Jwts.builder()
                 .subject(email)
+                .claim("role", role)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(secretKey)
                 .compact();
     }
 
+
+    // Extract email from JWT
     public String extractEmail(String token) {
 
         return Jwts.parser()
@@ -34,5 +39,17 @@ public class JwtUtil {
                 .parseSignedClaims(token)
                 .getPayload()
                 .getSubject();
+    }
+
+
+    // Extract role from JWT
+    public String extractRole(String token) {
+
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("role", String.class);
     }
 }
