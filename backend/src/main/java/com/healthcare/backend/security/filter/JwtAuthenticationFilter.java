@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -44,50 +44,47 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // No JWT token
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+
             filterChain.doFilter(request, response);
             return;
         }
 
-        // Remove "Bearer " from the token
+        // Remove "Bearer "
         String token = authHeader.substring(7);
 
         try {
 
-            // Extract email from JWT
+            // Get email from JWT
             String email = jwtUtil.extractEmail(token);
 
             // Find user from database
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() ->
-                            new RuntimeException("User not found")
+                            new RuntimeException("User not found"));
+
+            // Convert user's role into Spring Security authority
+            SimpleGrantedAuthority authority =
+                    new SimpleGrantedAuthority(
+                            "ROLE_" + user.getRole().name()
                     );
 
-            // Get user's role
-            String role = user.getRole().name();
-
-            // Create authentication with user's role
+            // Create authentication with role
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
                             email,
                             null,
-                            Collections.singletonList(
-                                    new SimpleGrantedAuthority(
-                                            "ROLE_" + role
-                                    )
-                            )
+                            List.of(authority)
                     );
 
-            // Put authentication into Spring Security context
+            // Store authentication in SecurityContext
             SecurityContextHolder.getContext()
                     .setAuthentication(authentication);
 
         } catch (Exception e) {
 
-            // Invalid JWT or user not found
             SecurityContextHolder.clearContext();
         }
 
-        // Continue request
         filterChain.doFilter(request, response);
     }
 }
