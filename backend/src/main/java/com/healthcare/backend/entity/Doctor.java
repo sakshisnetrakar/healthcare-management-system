@@ -1,5 +1,7 @@
 package com.healthcare.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -25,6 +27,14 @@ public class Doctor {
     @ManyToOne
     @JoinColumn(name = "department_id")
     private Department department;
+
+    // Link Doctor with User
+    // User information should NOT be exposed in API responses
+    @JsonIgnore
+    @OneToOne
+    @JoinColumn(name = "user_id", unique = true)
+    private User user;
+
 
     // Getters and Setters
 
@@ -70,5 +80,13 @@ public class Doctor {
 
     public void setDepartment(Department department) {
         this.department = department;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }
