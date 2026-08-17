@@ -19,9 +19,11 @@ public class DoctorController {
     // Only ADMIN can add a doctor
     @PreAuthorize("hasRole(\"ADMIN\")")
     @PostMapping
-    public Doctor addDoctor(@RequestBody Doctor doctor) {
+    public Doctor addDoctor(
+            @RequestBody Doctor doctor,
+            @RequestParam Long userId) {
 
-        return doctorService.addDoctor(doctor);
+        return doctorService.addDoctor(doctor, userId);
     }
 
     // ADMIN, DOCTOR and PATIENT can view all doctors
