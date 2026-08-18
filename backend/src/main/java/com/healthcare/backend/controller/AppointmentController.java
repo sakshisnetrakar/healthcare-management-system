@@ -33,8 +33,8 @@ public class AppointmentController {
         return appointmentService.getAllAppointments();
     }
 
-    // ADMIN, DOCTOR and PATIENT can access this for now
-    // Ownership checks will be added next
+    // ADMIN, DOCTOR and PATIENT can request a specific appointment
+    // Ownership checking will be handled next.
     @PreAuthorize("hasAnyRole(\"ADMIN\", \"DOCTOR\", \"PATIENT\")")
     @GetMapping("/{id}")
     public Appointment getAppointmentById(
@@ -43,7 +43,7 @@ public class AppointmentController {
         return appointmentService.getAppointmentById(id);
     }
 
-    // Only ADMIN can delete appointments
+    // Only ADMIN can delete an appointment
     @PreAuthorize("hasRole(\"ADMIN\")")
     @DeleteMapping("/{id}")
     public String deleteAppointment(
