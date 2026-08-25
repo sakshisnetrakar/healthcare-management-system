@@ -6,7 +6,7 @@ import com.healthcare.backend.service.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
+import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -19,7 +19,7 @@ public class PatientController {
     // Only ADMIN can add a patient
     @PreAuthorize("hasRole(\"ADMIN\")")
     @PostMapping
-    public Patient addPatient(@RequestBody Patient patient) {
+    public Patient addPatient(@Valid @RequestBody Patient patient) {
 
         return patientService.addPatient(patient);
     }

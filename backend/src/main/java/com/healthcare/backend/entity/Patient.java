@@ -14,6 +14,11 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 @Entity
 @Table(name = "patients")
 public class Patient {
@@ -22,32 +27,37 @@ public class Patient {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "Patient name is required")
     @Column(nullable = false)
     private String patientName;
 
+    @NotNull(message = "Gender is required")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Gender gender;
 
+    @Min(value = 1, message = "Age must be at least 1")
+    @Max(value = 120, message = "Age must not exceed 120")
     @Column(nullable = false)
     private int age;
 
+    @NotBlank(message = "Blood group is required")
     @Column(nullable = false)
     private String bloodGroup;
 
+    @NotBlank(message = "Phone number is required")
     @Column(nullable = false)
     private String phoneNumber;
 
+    @NotBlank(message = "Address is required")
     @Column(nullable = false)
     private String address;
 
-    // Link Patient with User
-    // User information should NOT be exposed in API responses
+
     @JsonIgnore
     @OneToOne
     @JoinColumn(name = "user_id", unique = true)
     private User user;
-
 
     // Getters and Setters
 
