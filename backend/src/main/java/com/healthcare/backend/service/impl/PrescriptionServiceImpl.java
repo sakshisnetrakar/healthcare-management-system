@@ -38,10 +38,12 @@ public class PrescriptionServiceImpl implements PrescriptionService {
 
 
     @Override
-    public Prescription savePrescription(Prescription prescription) {
+    public Prescription savePrescription(
+            Prescription prescription) {
 
         Authentication authentication =
-                SecurityContextHolder.getContext()
+                SecurityContextHolder
+                        .getContext()
                         .getAuthentication();
 
         String email = authentication.getName();
@@ -51,13 +53,24 @@ public class PrescriptionServiceImpl implements PrescriptionService {
                         new RuntimeException("User not found"));
 
 
+        // Appointment is required
+        if (prescription.getAppointment() == null ||
+                prescription.getAppointment().getId() == null) {
+
+            throw new RuntimeException(
+                    "Appointment ID is required");
+        }
+
+
         // ADMIN can create any prescription
         if (user.getRole().name().equals("ADMIN")) {
+
             return prescriptionRepository.save(prescription);
         }
 
 
-        // DOCTOR
+        // DOCTOR can create prescription
+        // only for their own appointment
         if (user.getRole().name().equals("DOCTOR")) {
 
             Doctor doctor = doctorRepository
@@ -66,35 +79,24 @@ public class PrescriptionServiceImpl implements PrescriptionService {
                             new RuntimeException(
                                     "Doctor record not found"));
 
-            if (prescription.getAppointment() == null ||
-                    prescription.getAppointment().getId() == null) {
-
-                throw new RuntimeException(
-                        "Appointment ID is required");
-            }
-
             Appointment appointment =
                     prescription.getAppointment();
 
-
             if (appointment.getDoctor() == null ||
-                    appointment.getDoctor().getId() == null) {
-
-                throw new RuntimeException(
-                        "Doctor ID is required");
-            }
-
-
-            if (!doctor.getId()
-                    .equals(appointment.getDoctor().getId())) {
+                    !appointment.getDoctor()
+                            .getId()
+                            .equals(doctor.getId())) {
 
                 throw new AccessDeniedException(
                         "You can create prescriptions only for your own appointments");
             }
+
+            return prescriptionRepository.save(prescription);
         }
 
 
-        return prescriptionRepository.save(prescription);
+        throw new AccessDeniedException(
+                "Only ADMIN or DOCTOR can create prescriptions");
     }
 
 
@@ -116,7 +118,8 @@ public class PrescriptionServiceImpl implements PrescriptionService {
 
 
         Authentication authentication =
-                SecurityContextHolder.getContext()
+                SecurityContextHolder
+                        .getContext()
                         .getAuthentication();
 
         String email = authentication.getName();
@@ -126,8 +129,11 @@ public class PrescriptionServiceImpl implements PrescriptionService {
                         new RuntimeException("User not found"));
 
 
-        // ADMIN can access everything
-        if (user.getRole().name().equals("ADMIN")) {
+        String role = user.getRole().name();
+
+
+        // ADMIN can access anything
+        if (role.equals("ADMIN")) {
             return prescription;
         }
 
@@ -136,13 +142,14 @@ public class PrescriptionServiceImpl implements PrescriptionService {
                 prescription.getAppointment();
 
         if (appointment == null) {
+
             throw new RuntimeException(
                     "Prescription is not linked to an appointment");
         }
 
 
-        // PATIENT
-        if (user.getRole().name().equals("PATIENT")) {
+        // PATIENT → only their own prescription
+        if (role.equals("PATIENT")) {
 
             Patient patient = patientRepository
                     .findByUserId(user.getId())
@@ -151,8 +158,9 @@ public class PrescriptionServiceImpl implements PrescriptionService {
                                     "Patient record not found"));
 
             if (appointment.getPatient() == null ||
-                    !patient.getId()
-                            .equals(appointment.getPatient().getId())) {
+                    !appointment.getPatient()
+                            .getId()
+                            .equals(patient.getId())) {
 
                 throw new AccessDeniedException(
                         "You can access only your own prescriptions");
@@ -162,8 +170,9 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         }
 
 
-        // DOCTOR
-        if (user.getRole().name().equals("DOCTOR")) {
+        // DOCTOR → only prescriptions
+        // from their own appointments
+        if (role.equals("DOCTOR")) {
 
             Doctor doctor = doctorRepository
                     .findByUserId(user.getId())
@@ -172,18 +181,20 @@ public class PrescriptionServiceImpl implements PrescriptionService {
                                     "Doctor record not found"));
 
             if (appointment.getDoctor() == null ||
-                    !doctor.getId()
-                            .equals(appointment.getDoctor().getId())) {
+                    !appointment.getDoctor()
+                            .getId()
+                            .equals(doctor.getId())) {
 
                 throw new AccessDeniedException(
-                        "You can access only prescriptions related to your appointments");
+                        "You can access only prescriptions from your appointments");
             }
 
             return prescription;
         }
 
 
-        throw new AccessDeniedException("Access denied");
+        throw new AccessDeniedException(
+                "Access denied");
     }
 
 

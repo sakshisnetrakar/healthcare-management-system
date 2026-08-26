@@ -17,8 +17,8 @@ public class PrescriptionController {
     private PrescriptionService prescriptionService;
 
 
-    // DOCTOR and ADMIN can create prescriptions
-    @PreAuthorize("hasAnyRole(\"DOCTOR\", \"ADMIN\")")
+    // ADMIN and DOCTOR can create prescriptions
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     @PostMapping
     public Prescription addPrescription(
             @RequestBody Prescription prescription) {
@@ -28,7 +28,7 @@ public class PrescriptionController {
 
 
     // Only ADMIN can view all prescriptions
-    @PreAuthorize("hasRole(\"ADMIN\")")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public List<Prescription> getAllPrescriptions() {
 
@@ -36,8 +36,9 @@ public class PrescriptionController {
     }
 
 
-    // ADMIN, DOCTOR and PATIENT can request one prescription
-    @PreAuthorize("hasAnyRole(\"ADMIN\", \"DOCTOR\", \"PATIENT\")")
+    // ADMIN, DOCTOR and PATIENT can request a prescription
+    // Ownership checking will happen in service
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'PATIENT')")
     @GetMapping("/{id}")
     public Prescription getPrescriptionById(
             @PathVariable Long id) {
@@ -46,8 +47,8 @@ public class PrescriptionController {
     }
 
 
-    // Only ADMIN can delete
-    @PreAuthorize("hasRole(\"ADMIN\")")
+    // Only ADMIN can delete prescriptions
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public String deletePrescription(
             @PathVariable Long id) {
