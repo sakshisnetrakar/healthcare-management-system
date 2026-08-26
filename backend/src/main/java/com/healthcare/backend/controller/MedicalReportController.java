@@ -17,8 +17,8 @@ public class MedicalReportController {
     private MedicalReportService medicalReportService;
 
 
-    // DOCTOR and ADMIN can add reports
-    @PreAuthorize("hasAnyRole(\"DOCTOR\", \"ADMIN\")")
+    // ADMIN and DOCTOR can add medical reports
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     @PostMapping
     public MedicalReport addReport(
             @RequestBody MedicalReport report) {
@@ -28,7 +28,7 @@ public class MedicalReportController {
 
 
     // Only ADMIN can view all reports
-    @PreAuthorize("hasRole(\"ADMIN\")")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public List<MedicalReport> getAllReports() {
 
@@ -36,8 +36,9 @@ public class MedicalReportController {
     }
 
 
-    // ADMIN, DOCTOR and PATIENT can request a specific report
-    @PreAuthorize("hasAnyRole(\"ADMIN\", \"DOCTOR\", \"PATIENT\")")
+    // ADMIN, DOCTOR and PATIENT can request a report
+    // Ownership checking will be done in service
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'PATIENT')")
     @GetMapping("/{id}")
     public MedicalReport getReportById(
             @PathVariable Long id) {
@@ -46,8 +47,8 @@ public class MedicalReportController {
     }
 
 
-    // Only ADMIN can delete
-    @PreAuthorize("hasRole(\"ADMIN\")")
+    // Only ADMIN can delete reports
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public String deleteReport(
             @PathVariable Long id) {

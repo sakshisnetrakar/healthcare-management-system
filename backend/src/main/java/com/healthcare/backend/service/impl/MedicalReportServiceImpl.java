@@ -1,6 +1,7 @@
 package com.healthcare.backend.service.impl;
 
 import com.healthcare.backend.entity.MedicalReport;
+import com.healthcare.backend.entity.Appointment;
 import com.healthcare.backend.entity.Doctor;
 import com.healthcare.backend.entity.Patient;
 import com.healthcare.backend.entity.User;
@@ -39,6 +40,7 @@ public class MedicalReportServiceImpl implements MedicalReportService {
     @Override
     public MedicalReport saveReport(MedicalReport report) {
 
+        // Get logged-in user
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
 
@@ -49,14 +51,23 @@ public class MedicalReportServiceImpl implements MedicalReportService {
                         new RuntimeException("User not found"));
 
 
-        // ADMIN can add any report
+        // Report must have an appointment
+        if (report.getAppointment() == null ||
+                report.getAppointment().getId() == null) {
+
+            throw new RuntimeException(
+                    "Appointment ID is required");
+        }
+
+
+        // If ADMIN → can add report
         if (user.getRole().name().equals("ADMIN")) {
+
             return medicalReportRepository.save(report);
         }
 
 
-        // Only DOCTOR reaches here because controller
-        // already restricts POST to DOCTOR and ADMIN
+        // If DOCTOR → report must belong to that doctor
         if (user.getRole().name().equals("DOCTOR")) {
 
             Doctor doctor = doctorRepository
@@ -65,29 +76,23 @@ public class MedicalReportServiceImpl implements MedicalReportService {
                             new RuntimeException(
                                     "Doctor record not found"));
 
-            if (report.getAppointment() == null ||
-                    report.getAppointment().getId() == null) {
+            Appointment appointment = report.getAppointment();
 
-                throw new RuntimeException(
-                        "Appointment ID is required");
-            }
-
-            // Get appointment's doctor
-            Long appointmentDoctorId =
-                    report.getAppointment()
-                            .getDoctor()
-                            .getId();
-
-            // Doctor can create report only
-            // for their own appointment
-            if (!doctor.getId().equals(appointmentDoctorId)) {
+            if (appointment.getDoctor() == null ||
+                    !appointment.getDoctor()
+                            .getId()
+                            .equals(doctor.getId())) {
 
                 throw new AccessDeniedException(
-                        "You can create reports only for your own appointments");
+                        "You can add reports only for your own appointments");
             }
+
+            return medicalReportRepository.save(report);
         }
 
-        return medicalReportRepository.save(report);
+
+        throw new AccessDeniedException(
+                "Only ADMIN or DOCTOR can add medical reports");
     }
 
 
@@ -101,11 +106,11 @@ public class MedicalReportServiceImpl implements MedicalReportService {
     @Override
     public MedicalReport getReportById(Long id) {
 
-        MedicalReport report =
-                medicalReportRepository.findById(id)
-                        .orElseThrow(() ->
-                                new RuntimeException(
-                                        "Medical report not found"));
+        MedicalReport report = medicalReportRepository
+                .findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Medical report not found"));
 
 
         Authentication authentication =
@@ -119,21 +124,28 @@ public class MedicalReportServiceImpl implements MedicalReportService {
                         new RuntimeException("User not found"));
 
 
+        String role = user.getRole().name();
+
+
         // ADMIN can access any report
-        if (user.getRole().name().equals("ADMIN")) {
+        if (role.equals("ADMIN")) {
             return report;
         }
 
 
-        // Make sure report has an appointment
-        if (report.getAppointment() == null) {
+        // Make sure report has appointment
+        Appointment appointment =
+                report.getAppointment();
+
+        if (appointment == null) {
+
             throw new RuntimeException(
                     "Report is not linked to an appointment");
         }
 
 
-        // PATIENT
-        if (user.getRole().name().equals("PATIENT")) {
+        // PATIENT → only their own report
+        if (role.equals("PATIENT")) {
 
             Patient patient = patientRepository
                     .findByUserId(user.getId())
@@ -141,12 +153,10 @@ public class MedicalReportServiceImpl implements MedicalReportService {
                             new RuntimeException(
                                     "Patient record not found"));
 
-            Long reportPatientId =
-                    report.getAppointment()
-                            .getPatient()
-                            .getId();
-
-            if (!patient.getId().equals(reportPatientId)) {
+            if (appointment.getPatient() == null ||
+                    !appointment.getPatient()
+                            .getId()
+                            .equals(patient.getId())) {
 
                 throw new AccessDeniedException(
                         "You can access only your own medical reports");
@@ -156,8 +166,8 @@ public class MedicalReportServiceImpl implements MedicalReportService {
         }
 
 
-        // DOCTOR
-        if (user.getRole().name().equals("DOCTOR")) {
+        // DOCTOR → only reports from their appointments
+        if (role.equals("DOCTOR")) {
 
             Doctor doctor = doctorRepository
                     .findByUserId(user.getId())
@@ -165,22 +175,21 @@ public class MedicalReportServiceImpl implements MedicalReportService {
                             new RuntimeException(
                                     "Doctor record not found"));
 
-            Long reportDoctorId =
-                    report.getAppointment()
-                            .getDoctor()
-                            .getId();
-
-            if (!doctor.getId().equals(reportDoctorId)) {
+            if (appointment.getDoctor() == null ||
+                    !appointment.getDoctor()
+                            .getId()
+                            .equals(doctor.getId())) {
 
                 throw new AccessDeniedException(
-                        "You can access only reports related to your appointments");
+                        "You can access only reports from your appointments");
             }
 
             return report;
         }
 
 
-        throw new AccessDeniedException("Access denied");
+        throw new AccessDeniedException(
+                "Access denied");
     }
 
 
