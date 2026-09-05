@@ -1,9 +1,13 @@
 package com.healthcare.backend.service.impl;
 
+import com.healthcare.backend.dto.request.AppointmentRequestDTO;
+import com.healthcare.backend.dto.response.AppointmentResponseDTO;
 import com.healthcare.backend.entity.Appointment;
 import com.healthcare.backend.entity.Doctor;
 import com.healthcare.backend.entity.Patient;
 import com.healthcare.backend.entity.User;
+import com.healthcare.backend.enums.AppointmentStatus;
+import com.healthcare.backend.mapper.AppointmentMapper;
 import com.healthcare.backend.repository.AppointmentRepository;
 import com.healthcare.backend.repository.DoctorRepository;
 import com.healthcare.backend.repository.PatientRepository;
@@ -35,84 +39,111 @@ public class AppointmentServiceImpl implements AppointmentService {
 
 
     @Override
-    public Appointment bookAppointment(Appointment appointment) {
+    public AppointmentResponseDTO bookAppointment(
+            AppointmentRequestDTO dto) {
 
-        // Get logged-in user's email from JWT
+        // Get logged-in user
         Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
 
         String email = authentication.getName();
 
-        // Find logged-in User
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
                         new RuntimeException("User not found"));
 
-        // Find Patient linked to this User
-        Patient patient = patientRepository.findByUserId(user.getId())
+
+        // Find patient linked to logged-in user
+        Patient patient = patientRepository
+                .findByUserId(user.getId())
                 .orElseThrow(() ->
-                        new RuntimeException("Patient record not found"));
+                        new RuntimeException(
+                                "Patient record not found"));
 
-        // Automatically set the logged-in patient
-        appointment.setPatient(patient);
 
-        // Check doctor ID
-        if (appointment.getDoctor() == null ||
-                appointment.getDoctor().getId() == null) {
-
-            throw new RuntimeException("Doctor ID is required");
-        }
-
-        // Find Doctor
+        // Find selected doctor
         Doctor doctor = doctorRepository
-                .findById(appointment.getDoctor().getId())
+                .findById(dto.getDoctorId())
                 .orElseThrow(() ->
-                        new RuntimeException("Doctor not found"));
+                        new RuntimeException(
+                                "Doctor not found"));
 
-        // Set actual Doctor entity
+
+        // Create appointment
+        Appointment appointment = new Appointment();
+
+        appointment.setAppointmentDate(
+                dto.getAppointmentDate());
+
+        appointment.setAppointmentTime(
+                dto.getAppointmentTime());
+
         appointment.setDoctor(doctor);
 
-        return appointmentRepository.save(appointment);
+        // Patient comes from logged-in user
+        appointment.setPatient(patient);
+
+        // Default status
+        appointment.setStatus(
+                AppointmentStatus.BOOKED);
+
+
+        Appointment savedAppointment =
+                appointmentRepository.save(appointment);
+
+        return AppointmentMapper.toResponseDTO(
+                savedAppointment);
     }
 
 
     @Override
-    public List<Appointment> getAllAppointments() {
+    public List<AppointmentResponseDTO> getAllAppointments() {
 
-        return appointmentRepository.findAll();
+        return appointmentRepository.findAll()
+                .stream()
+                .map(AppointmentMapper::toResponseDTO)
+                .toList();
     }
 
 
     @Override
-    public Appointment getAppointmentById(Long id) {
+    public AppointmentResponseDTO getAppointmentById(Long id) {
 
-        // Find appointment
-        Appointment appointment = appointmentRepository
-                .findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Appointment not found"));
+        Appointment appointment =
+                appointmentRepository
+                        .findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Appointment not found"));
 
-        // Get logged-in user from JWT
+
         Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
 
         String email = authentication.getName();
 
-        // Find User
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+                        new RuntimeException(
+                                "User not found"));
+
 
         String role = user.getRole().name();
 
 
         // ADMIN can access any appointment
         if (role.equals("ADMIN")) {
-            return appointment;
+
+            return AppointmentMapper.toResponseDTO(
+                    appointment);
         }
 
 
-        // PATIENT can access only their own appointment
+        // PATIENT can access only their appointment
         if (role.equals("PATIENT")) {
 
             Patient patient = patientRepository
@@ -129,11 +160,12 @@ public class AppointmentServiceImpl implements AppointmentService {
                         "You can access only your own appointments");
             }
 
-            return appointment;
+            return AppointmentMapper.toResponseDTO(
+                    appointment);
         }
 
 
-        // DOCTOR can access only their own appointments
+        // DOCTOR can access only their appointment
         if (role.equals("DOCTOR")) {
 
             Doctor doctor = doctorRepository
@@ -150,16 +182,24 @@ public class AppointmentServiceImpl implements AppointmentService {
                         "You can access only your own appointments");
             }
 
-            return appointment;
+            return AppointmentMapper.toResponseDTO(
+                    appointment);
         }
 
 
-        throw new AccessDeniedException("Access denied");
+        throw new AccessDeniedException(
+                "Access denied");
     }
 
 
     @Override
     public void deleteAppointment(Long id) {
+
+        if (!appointmentRepository.existsById(id)) {
+
+            throw new RuntimeException(
+                    "Appointment not found");
+        }
 
         appointmentRepository.deleteById(id);
     }

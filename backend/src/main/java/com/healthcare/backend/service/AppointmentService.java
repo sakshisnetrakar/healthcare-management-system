@@ -1,16 +1,18 @@
 package com.healthcare.backend.service;
 
-import com.healthcare.backend.entity.Appointment;
+import com.healthcare.backend.dto.request.AppointmentRequestDTO;
+import com.healthcare.backend.dto.response.AppointmentResponseDTO;
 
 import java.util.List;
 
 public interface AppointmentService {
 
-    Appointment bookAppointment(Appointment appointment);
+    AppointmentResponseDTO bookAppointment(
+            AppointmentRequestDTO dto);
 
-    List<Appointment> getAllAppointments();
+    List<AppointmentResponseDTO> getAllAppointments();
 
-    Appointment getAppointmentById(Long id);
+    AppointmentResponseDTO getAppointmentById(Long id);
 
     void deleteAppointment(Long id);
 }
