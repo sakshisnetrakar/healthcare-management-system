@@ -1,7 +1,10 @@
 package com.healthcare.backend.controller;
 
-import com.healthcare.backend.entity.Appointment;
+import com.healthcare.backend.dto.request.AppointmentRequestDTO;
+import com.healthcare.backend.dto.response.AppointmentResponseDTO;
 import com.healthcare.backend.service.AppointmentService;
+
+import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,34 +19,38 @@ public class AppointmentController {
     @Autowired
     private AppointmentService appointmentService;
 
-    // Only PATIENT can book an appointment
+
+    // Only PATIENT can book
     @PreAuthorize("hasRole(\"PATIENT\")")
     @PostMapping
-    public Appointment bookAppointment(
-            @RequestBody Appointment appointment) {
+    public AppointmentResponseDTO bookAppointment(
+            @Valid @RequestBody AppointmentRequestDTO dto) {
 
-        return appointmentService.bookAppointment(appointment);
+        return appointmentService.bookAppointment(dto);
     }
 
-    // Only ADMIN can view all appointments
+
+    // Only ADMIN can view all
     @PreAuthorize("hasRole(\"ADMIN\")")
     @GetMapping
-    public List<Appointment> getAllAppointments() {
+    public List<AppointmentResponseDTO> getAllAppointments() {
 
         return appointmentService.getAllAppointments();
     }
 
-    // ADMIN, DOCTOR and PATIENT can request a specific appointment
-    // Ownership checking will be handled next.
-    @PreAuthorize("hasAnyRole(\"ADMIN\", \"DOCTOR\", \"PATIENT\")")
+
+    // ADMIN, DOCTOR and PATIENT
+    @PreAuthorize(
+            "hasAnyRole(\"ADMIN\", \"DOCTOR\", \"PATIENT\")")
     @GetMapping("/{id}")
-    public Appointment getAppointmentById(
+    public AppointmentResponseDTO getAppointmentById(
             @PathVariable Long id) {
 
         return appointmentService.getAppointmentById(id);
     }
 
-    // Only ADMIN can delete an appointment
+
+    // Only ADMIN can delete
     @PreAuthorize("hasRole(\"ADMIN\")")
     @DeleteMapping("/{id}")
     public String deleteAppointment(
