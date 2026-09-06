@@ -1,16 +1,18 @@
 package com.healthcare.backend.service;
 
-import com.healthcare.backend.entity.Patient;
+import com.healthcare.backend.dto.request.PatientRequestDTO;
+import com.healthcare.backend.dto.response.PatientResponseDTO;
 
 import java.util.List;
 
 public interface PatientService {
 
-    Patient addPatient(Patient patient);
+    PatientResponseDTO addPatient(
+            PatientRequestDTO dto);
 
-    List<Patient> getAllPatients();
+    List<PatientResponseDTO> getAllPatients();
 
-    Patient getPatientById(Long id);
+    PatientResponseDTO getPatientById(Long id);
 
     void deletePatient(Long id);
 }
