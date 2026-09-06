@@ -1,16 +1,18 @@
 package com.healthcare.backend.service;
 
-import com.healthcare.backend.entity.Doctor;
+import com.healthcare.backend.dto.request.DoctorRequestDTO;
+import com.healthcare.backend.dto.response.DoctorResponseDTO;
 
 import java.util.List;
 
 public interface DoctorService {
 
-    Doctor addDoctor(Doctor doctor, Long userId);
+    DoctorResponseDTO addDoctor(
+            DoctorRequestDTO dto);
 
-    List<Doctor> getAllDoctors();
+    List<DoctorResponseDTO> getAllDoctors();
 
-    Doctor getDoctorById(Long id);
+    DoctorResponseDTO getDoctorById(Long id);
 
     void deleteDoctor(Long id);
 }

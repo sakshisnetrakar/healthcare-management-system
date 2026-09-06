@@ -1,7 +1,10 @@
 package com.healthcare.backend.controller;
 
-import com.healthcare.backend.entity.Doctor;
+import com.healthcare.backend.dto.request.DoctorRequestDTO;
+import com.healthcare.backend.dto.response.DoctorResponseDTO;
 import com.healthcare.backend.service.DoctorService;
+
+import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,36 +19,43 @@ public class DoctorController {
     @Autowired
     private DoctorService doctorService;
 
-    // Only ADMIN can add a doctor
+
+    // Only ADMIN can add doctor
     @PreAuthorize("hasRole(\"ADMIN\")")
     @PostMapping
-    public Doctor addDoctor(
-            @RequestBody Doctor doctor,
-            @RequestParam Long userId) {
+    public DoctorResponseDTO addDoctor(
+            @Valid @RequestBody DoctorRequestDTO dto) {
 
-        return doctorService.addDoctor(doctor, userId);
+        return doctorService.addDoctor(dto);
     }
 
-    // ADMIN, DOCTOR and PATIENT can view all doctors
-    @PreAuthorize("hasAnyRole(\"ADMIN\", \"DOCTOR\", \"PATIENT\")")
+
+    // ADMIN, DOCTOR and PATIENT can view doctors
+    @PreAuthorize(
+            "hasAnyRole(\"ADMIN\", \"DOCTOR\", \"PATIENT\")")
     @GetMapping
-    public List<Doctor> getAllDoctors() {
+    public List<DoctorResponseDTO> getAllDoctors() {
 
         return doctorService.getAllDoctors();
     }
 
-    // ADMIN, DOCTOR and PATIENT can view a doctor
-    @PreAuthorize("hasAnyRole(\"ADMIN\", \"DOCTOR\", \"PATIENT\")")
+
+    // ADMIN, DOCTOR and PATIENT can view doctor
+    @PreAuthorize(
+            "hasAnyRole(\"ADMIN\", \"DOCTOR\", \"PATIENT\")")
     @GetMapping("/{id}")
-    public Doctor getDoctorById(@PathVariable Long id) {
+    public DoctorResponseDTO getDoctorById(
+            @PathVariable Long id) {
 
         return doctorService.getDoctorById(id);
     }
 
-    // Only ADMIN can delete a doctor
+
+    // Only ADMIN can delete
     @PreAuthorize("hasRole(\"ADMIN\")")
     @DeleteMapping("/{id}")
-    public String deleteDoctor(@PathVariable Long id) {
+    public String deleteDoctor(
+            @PathVariable Long id) {
 
         doctorService.deleteDoctor(id);
 
