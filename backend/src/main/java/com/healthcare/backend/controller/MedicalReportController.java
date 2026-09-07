@@ -1,7 +1,10 @@
 package com.healthcare.backend.controller;
 
-import com.healthcare.backend.entity.MedicalReport;
+import com.healthcare.backend.dto.request.MedicalReportRequestDTO;
+import com.healthcare.backend.dto.response.MedicalReportResponseDTO;
 import com.healthcare.backend.service.MedicalReportService;
+
+import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -10,50 +13,55 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/reports")
+@RequestMapping("/api/medical-reports")
 public class MedicalReportController {
 
     @Autowired
     private MedicalReportService medicalReportService;
 
 
-    // ADMIN and DOCTOR can add medical reports
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
+    // ADMIN and DOCTOR can create
+    @PreAuthorize("hasAnyRole(\"ADMIN\", \"DOCTOR\")")
     @PostMapping
-    public MedicalReport addReport(
-            @RequestBody MedicalReport report) {
+    public MedicalReportResponseDTO addMedicalReport(
+            @Valid @RequestBody MedicalReportRequestDTO dto) {
 
-        return medicalReportService.saveReport(report);
+        return medicalReportService.addMedicalReport(dto);
     }
 
 
-    // Only ADMIN can view all reports
-    @PreAuthorize("hasRole('ADMIN')")
+    // Only ADMIN can view all
+    @PreAuthorize("hasRole(\"ADMIN\")")
     @GetMapping
-    public List<MedicalReport> getAllReports() {
+    public List<MedicalReportResponseDTO>
+    getAllMedicalReports() {
 
-        return medicalReportService.getAllReports();
+        return medicalReportService
+                .getAllMedicalReports();
     }
 
 
-    // ADMIN, DOCTOR and PATIENT can request a report
-    // Ownership checking will be done in service
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'PATIENT')")
+    // ADMIN, DOCTOR and PATIENT
+    @PreAuthorize(
+            "hasAnyRole(\"ADMIN\", \"DOCTOR\", \"PATIENT\")")
     @GetMapping("/{id}")
-    public MedicalReport getReportById(
+    public MedicalReportResponseDTO
+    getMedicalReportById(
             @PathVariable Long id) {
 
-        return medicalReportService.getReportById(id);
+        return medicalReportService
+                .getMedicalReportById(id);
     }
 
 
-    // Only ADMIN can delete reports
-    @PreAuthorize("hasRole('ADMIN')")
+    // Only ADMIN can delete
+    @PreAuthorize("hasRole(\"ADMIN\")")
     @DeleteMapping("/{id}")
-    public String deleteReport(
+    public String deleteMedicalReport(
             @PathVariable Long id) {
 
-        medicalReportService.deleteReport(id);
+        medicalReportService
+                .deleteMedicalReport(id);
 
         return "Medical report deleted successfully";
     }

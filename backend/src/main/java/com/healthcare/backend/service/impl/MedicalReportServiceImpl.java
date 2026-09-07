@@ -1,16 +1,18 @@
 package com.healthcare.backend.service.impl;
 
-import com.healthcare.backend.entity.MedicalReport;
+import com.healthcare.backend.dto.request.MedicalReportRequestDTO;
+import com.healthcare.backend.dto.response.MedicalReportResponseDTO;
 import com.healthcare.backend.entity.Appointment;
 import com.healthcare.backend.entity.Doctor;
+import com.healthcare.backend.entity.MedicalReport;
 import com.healthcare.backend.entity.Patient;
 import com.healthcare.backend.entity.User;
-
-import com.healthcare.backend.repository.MedicalReportRepository;
+import com.healthcare.backend.mapper.MedicalReportMapper;
+import com.healthcare.backend.repository.AppointmentRepository;
 import com.healthcare.backend.repository.DoctorRepository;
+import com.healthcare.backend.repository.MedicalReportRepository;
 import com.healthcare.backend.repository.PatientRepository;
 import com.healthcare.backend.repository.UserRepository;
-
 import com.healthcare.backend.service.MedicalReportService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,10 +24,14 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class MedicalReportServiceImpl implements MedicalReportService {
+public class MedicalReportServiceImpl
+        implements MedicalReportService {
 
     @Autowired
     private MedicalReportRepository medicalReportRepository;
+
+    @Autowired
+    private AppointmentRepository appointmentRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -38,135 +44,52 @@ public class MedicalReportServiceImpl implements MedicalReportService {
 
 
     @Override
-    public MedicalReport saveReport(MedicalReport report) {
+    public MedicalReportResponseDTO addMedicalReport(
+            MedicalReportRequestDTO dto) {
 
-        // Get logged-in user
-        Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
-
-        String email = authentication.getName();
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new RuntimeException("User not found"));
-
-
-        // Report must have an appointment
-        if (report.getAppointment() == null ||
-                report.getAppointment().getId() == null) {
-
-            throw new RuntimeException(
-                    "Appointment ID is required");
-        }
-
-
-        // If ADMIN → can add report
-        if (user.getRole().name().equals("ADMIN")) {
-
-            return medicalReportRepository.save(report);
-        }
-
-
-        // If DOCTOR → report must belong to that doctor
-        if (user.getRole().name().equals("DOCTOR")) {
-
-            Doctor doctor = doctorRepository
-                    .findByUserId(user.getId())
-                    .orElseThrow(() ->
-                            new RuntimeException(
-                                    "Doctor record not found"));
-
-            Appointment appointment = report.getAppointment();
-
-            if (appointment.getDoctor() == null ||
-                    !appointment.getDoctor()
-                            .getId()
-                            .equals(doctor.getId())) {
-
-                throw new AccessDeniedException(
-                        "You can add reports only for your own appointments");
-            }
-
-            return medicalReportRepository.save(report);
-        }
-
-
-        throw new AccessDeniedException(
-                "Only ADMIN or DOCTOR can add medical reports");
-    }
-
-
-    @Override
-    public List<MedicalReport> getAllReports() {
-
-        return medicalReportRepository.findAll();
-    }
-
-
-    @Override
-    public MedicalReport getReportById(Long id) {
-
-        MedicalReport report = medicalReportRepository
-                .findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Medical report not found"));
+        Appointment appointment =
+                appointmentRepository
+                        .findById(dto.getAppointmentId())
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Appointment not found"));
 
 
         Authentication authentication =
-                SecurityContextHolder.getContext()
+                SecurityContextHolder
+                        .getContext()
                         .getAuthentication();
 
         String email = authentication.getName();
 
-        User user = userRepository.findByEmail(email)
+        User user = userRepository
+                .findByEmail(email)
                 .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+                        new RuntimeException(
+                                "User not found"));
 
 
         String role = user.getRole().name();
 
 
-        // ADMIN can access any report
+        // ADMIN can create report for any appointment
         if (role.equals("ADMIN")) {
-            return report;
+
+            MedicalReport report =
+                    MedicalReportMapper.toEntity(dto);
+
+            report.setAppointment(appointment);
+
+            MedicalReport savedReport =
+                    medicalReportRepository.save(report);
+
+            return MedicalReportMapper.toResponseDTO(
+                    savedReport);
         }
 
 
-        // Make sure report has appointment
-        Appointment appointment =
-                report.getAppointment();
-
-        if (appointment == null) {
-
-            throw new RuntimeException(
-                    "Report is not linked to an appointment");
-        }
-
-
-        // PATIENT → only their own report
-        if (role.equals("PATIENT")) {
-
-            Patient patient = patientRepository
-                    .findByUserId(user.getId())
-                    .orElseThrow(() ->
-                            new RuntimeException(
-                                    "Patient record not found"));
-
-            if (appointment.getPatient() == null ||
-                    !appointment.getPatient()
-                            .getId()
-                            .equals(patient.getId())) {
-
-                throw new AccessDeniedException(
-                        "You can access only your own medical reports");
-            }
-
-            return report;
-        }
-
-
-        // DOCTOR → only reports from their appointments
+        // DOCTOR can create report only
+        // for their own appointment
         if (role.equals("DOCTOR")) {
 
             Doctor doctor = doctorRepository
@@ -175,16 +98,125 @@ public class MedicalReportServiceImpl implements MedicalReportService {
                             new RuntimeException(
                                     "Doctor record not found"));
 
-            if (appointment.getDoctor() == null ||
-                    !appointment.getDoctor()
-                            .getId()
-                            .equals(doctor.getId())) {
+            if (!appointment.getDoctor()
+                    .getId()
+                    .equals(doctor.getId())) {
 
                 throw new AccessDeniedException(
-                        "You can access only reports from your appointments");
+                        "You can create reports only for your own appointments");
             }
 
-            return report;
+            MedicalReport report =
+                    MedicalReportMapper.toEntity(dto);
+
+            report.setAppointment(appointment);
+
+            MedicalReport savedReport =
+                    medicalReportRepository.save(report);
+
+            return MedicalReportMapper.toResponseDTO(
+                    savedReport);
+        }
+
+
+        throw new AccessDeniedException(
+                "You are not allowed to create medical reports");
+    }
+
+
+    @Override
+    public List<MedicalReportResponseDTO>
+    getAllMedicalReports() {
+
+        return medicalReportRepository.findAll()
+                .stream()
+                .map(MedicalReportMapper::toResponseDTO)
+                .toList();
+    }
+
+
+    @Override
+    public MedicalReportResponseDTO
+    getMedicalReportById(Long id) {
+
+        MedicalReport report =
+                medicalReportRepository
+                        .findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Medical report not found"));
+
+
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        String email = authentication.getName();
+
+        User user = userRepository
+                .findByEmail(email)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "User not found"));
+
+
+        String role = user.getRole().name();
+
+
+        // ADMIN
+        if (role.equals("ADMIN")) {
+
+            return MedicalReportMapper.toResponseDTO(
+                    report);
+        }
+
+
+        // PATIENT
+        if (role.equals("PATIENT")) {
+
+            Patient patient =
+                    patientRepository
+                            .findByUserId(user.getId())
+                            .orElseThrow(() ->
+                                    new RuntimeException(
+                                            "Patient record not found"));
+
+            if (!report.getAppointment()
+                    .getPatient()
+                    .getId()
+                    .equals(patient.getId())) {
+
+                throw new AccessDeniedException(
+                        "You can access only your own medical reports");
+            }
+
+            return MedicalReportMapper.toResponseDTO(
+                    report);
+        }
+
+
+        // DOCTOR
+        if (role.equals("DOCTOR")) {
+
+            Doctor doctor =
+                    doctorRepository
+                            .findByUserId(user.getId())
+                            .orElseThrow(() ->
+                                    new RuntimeException(
+                                            "Doctor record not found"));
+
+            if (!report.getAppointment()
+                    .getDoctor()
+                    .getId()
+                    .equals(doctor.getId())) {
+
+                throw new AccessDeniedException(
+                        "You can access only reports for your appointments");
+            }
+
+            return MedicalReportMapper.toResponseDTO(
+                    report);
         }
 
 
@@ -194,7 +226,13 @@ public class MedicalReportServiceImpl implements MedicalReportService {
 
 
     @Override
-    public void deleteReport(Long id) {
+    public void deleteMedicalReport(Long id) {
+
+        if (!medicalReportRepository.existsById(id)) {
+
+            throw new RuntimeException(
+                    "Medical report not found");
+        }
 
         medicalReportRepository.deleteById(id);
     }

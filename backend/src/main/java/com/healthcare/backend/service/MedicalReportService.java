@@ -1,16 +1,18 @@
 package com.healthcare.backend.service;
 
-import com.healthcare.backend.entity.MedicalReport;
+import com.healthcare.backend.dto.request.MedicalReportRequestDTO;
+import com.healthcare.backend.dto.response.MedicalReportResponseDTO;
 
 import java.util.List;
 
 public interface MedicalReportService {
 
-    MedicalReport saveReport(MedicalReport report);
+    MedicalReportResponseDTO addMedicalReport(
+            MedicalReportRequestDTO dto);
 
-    List<MedicalReport> getAllReports();
+    List<MedicalReportResponseDTO> getAllMedicalReports();
 
-    MedicalReport getReportById(Long id);
+    MedicalReportResponseDTO getMedicalReportById(Long id);
 
-    void deleteReport(Long id);
+    void deleteMedicalReport(Long id);
 }
