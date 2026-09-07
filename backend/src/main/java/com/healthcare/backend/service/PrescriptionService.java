@@ -1,16 +1,18 @@
 package com.healthcare.backend.service;
 
-import com.healthcare.backend.entity.Prescription;
+import com.healthcare.backend.dto.request.PrescriptionRequestDTO;
+import com.healthcare.backend.dto.response.PrescriptionResponseDTO;
 
 import java.util.List;
 
 public interface PrescriptionService {
 
-    Prescription savePrescription(Prescription prescription);
+    PrescriptionResponseDTO addPrescription(
+            PrescriptionRequestDTO dto);
 
-    List<Prescription> getAllPrescriptions();
+    List<PrescriptionResponseDTO> getAllPrescriptions();
 
-    Prescription getPrescriptionById(Long id);
+    PrescriptionResponseDTO getPrescriptionById(Long id);
 
     void deletePrescription(Long id);
 }
