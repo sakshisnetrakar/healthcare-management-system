@@ -1,16 +1,18 @@
 package com.healthcare.backend.service;
 
-import com.healthcare.backend.entity.Department;
+import com.healthcare.backend.dto.request.DepartmentRequestDTO;
+import com.healthcare.backend.dto.response.DepartmentResponseDTO;
 
 import java.util.List;
 
 public interface DepartmentService {
 
-    Department addDepartment(Department department);
+    DepartmentResponseDTO addDepartment(
+            DepartmentRequestDTO dto);
 
-    List<Department> getAllDepartments();
+    List<DepartmentResponseDTO> getAllDepartments();
 
-    Department getDepartmentById(Long id);
+    DepartmentResponseDTO getDepartmentById(Long id);
 
     void deleteDepartment(Long id);
 }
