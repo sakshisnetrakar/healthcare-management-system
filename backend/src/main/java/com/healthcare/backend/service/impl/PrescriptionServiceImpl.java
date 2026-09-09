@@ -7,6 +7,7 @@ import com.healthcare.backend.entity.Doctor;
 import com.healthcare.backend.entity.Patient;
 import com.healthcare.backend.entity.Prescription;
 import com.healthcare.backend.entity.User;
+import com.healthcare.backend.exception.ResourceNotFoundException;
 import com.healthcare.backend.mapper.PrescriptionMapper;
 import com.healthcare.backend.repository.AppointmentRepository;
 import com.healthcare.backend.repository.DoctorRepository;
@@ -51,9 +52,8 @@ public class PrescriptionServiceImpl
                 appointmentRepository
                         .findById(dto.getAppointmentId())
                         .orElseThrow(() ->
-                                new RuntimeException(
+                                new ResourceNotFoundException(
                                         "Appointment not found"));
-
 
         Authentication authentication =
                 SecurityContextHolder
@@ -65,13 +65,12 @@ public class PrescriptionServiceImpl
         User user = userRepository
                 .findByEmail(email)
                 .orElseThrow(() ->
-                        new RuntimeException(
+                        new ResourceNotFoundException(
                                 "User not found"));
 
         String role = user.getRole().name();
 
 
-        // ADMIN can create for any appointment
         if (role.equals("ADMIN")) {
 
             Prescription prescription =
@@ -88,14 +87,13 @@ public class PrescriptionServiceImpl
         }
 
 
-        // DOCTOR can create only for their appointment
         if (role.equals("DOCTOR")) {
 
             Doctor doctor =
                     doctorRepository
                             .findByUserId(user.getId())
                             .orElseThrow(() ->
-                                    new RuntimeException(
+                                    new ResourceNotFoundException(
                                             "Doctor record not found"));
 
             if (!appointment.getDoctor()
@@ -144,9 +142,8 @@ public class PrescriptionServiceImpl
                 prescriptionRepository
                         .findById(id)
                         .orElseThrow(() ->
-                                new RuntimeException(
+                                new ResourceNotFoundException(
                                         "Prescription not found"));
-
 
         Authentication authentication =
                 SecurityContextHolder
@@ -158,13 +155,12 @@ public class PrescriptionServiceImpl
         User user = userRepository
                 .findByEmail(email)
                 .orElseThrow(() ->
-                        new RuntimeException(
+                        new ResourceNotFoundException(
                                 "User not found"));
 
         String role = user.getRole().name();
 
 
-        // ADMIN
         if (role.equals("ADMIN")) {
 
             return PrescriptionMapper.toResponseDTO(
@@ -172,14 +168,13 @@ public class PrescriptionServiceImpl
         }
 
 
-        // PATIENT
         if (role.equals("PATIENT")) {
 
             Patient patient =
                     patientRepository
                             .findByUserId(user.getId())
                             .orElseThrow(() ->
-                                    new RuntimeException(
+                                    new ResourceNotFoundException(
                                             "Patient record not found"));
 
             if (!prescription.getAppointment()
@@ -196,14 +191,13 @@ public class PrescriptionServiceImpl
         }
 
 
-        // DOCTOR
         if (role.equals("DOCTOR")) {
 
             Doctor doctor =
                     doctorRepository
                             .findByUserId(user.getId())
                             .orElseThrow(() ->
-                                    new RuntimeException(
+                                    new ResourceNotFoundException(
                                             "Doctor record not found"));
 
             if (!prescription.getAppointment()
@@ -230,7 +224,7 @@ public class PrescriptionServiceImpl
 
         if (!prescriptionRepository.existsById(id)) {
 
-            throw new RuntimeException(
+            throw new ResourceNotFoundException(
                     "Prescription not found");
         }
 

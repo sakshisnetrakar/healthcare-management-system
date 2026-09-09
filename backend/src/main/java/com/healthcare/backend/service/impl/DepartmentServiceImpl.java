@@ -3,6 +3,7 @@ package com.healthcare.backend.service.impl;
 import com.healthcare.backend.dto.request.DepartmentRequestDTO;
 import com.healthcare.backend.dto.response.DepartmentResponseDTO;
 import com.healthcare.backend.entity.Department;
+import com.healthcare.backend.exception.ResourceNotFoundException;
 import com.healthcare.backend.mapper.DepartmentMapper;
 import com.healthcare.backend.repository.DepartmentRepository;
 import com.healthcare.backend.service.DepartmentService;
@@ -53,7 +54,7 @@ public class DepartmentServiceImpl
         Department department =
                 departmentRepository.findById(id)
                         .orElseThrow(() ->
-                                new RuntimeException(
+                                new ResourceNotFoundException(
                                         "Department not found"));
 
         return DepartmentMapper.toResponseDTO(
@@ -66,7 +67,7 @@ public class DepartmentServiceImpl
 
         if (!departmentRepository.existsById(id)) {
 
-            throw new RuntimeException(
+            throw new ResourceNotFoundException(
                     "Department not found");
         }
 

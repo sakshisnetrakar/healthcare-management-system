@@ -7,6 +7,8 @@ import com.healthcare.backend.exception.ResourceNotFoundException;
 import com.healthcare.backend.repository.UserRepository;
 import com.healthcare.backend.security.jwt.JwtUtil;
 import com.healthcare.backend.service.AuthService;
+
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -14,8 +16,11 @@ import org.springframework.stereotype.Service;
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
+
     private final PasswordEncoder passwordEncoder;
+
     private final JwtUtil jwtUtil;
+
 
     public AuthServiceImpl(
             UserRepository userRepository,
@@ -27,27 +32,38 @@ public class AuthServiceImpl implements AuthService {
         this.jwtUtil = jwtUtil;
     }
 
-    @Override
-    public LoginResponseDTO login(LoginRequestDTO dto) {
 
-        User user = userRepository.findByEmail(dto.getEmail())
+    @Override
+    public LoginResponseDTO login(
+            LoginRequestDTO dto) {
+
+        User user = userRepository
+                .findByEmail(dto.getEmail())
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "User not found with email: " + dto.getEmail()
+                                "User not found with email: "
+                                        + dto.getEmail()
                         )
                 );
 
+
+        // Check password
         if (!passwordEncoder.matches(
                 dto.getPassword(),
                 user.getPassword())) {
 
-            throw new RuntimeException("Invalid password");
+            throw new BadCredentialsException(
+                    "Invalid email or password");
         }
 
+
+        // Generate JWT
         String token = jwtUtil.generateToken(
-        user.getEmail(),
-        user.getRole().name()
-);
+                user.getEmail(),
+                user.getRole().name()
+        );
+
+
         return new LoginResponseDTO(
                 token,
                 "Login successful"

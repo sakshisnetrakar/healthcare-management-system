@@ -9,9 +9,8 @@ import com.healthcare.backend.repository.UserRepository;
 import com.healthcare.backend.service.UserService;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
@@ -24,18 +23,24 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+
     // Register a new user
     @Override
     public UserResponseDTO registerUser(UserRequestDTO dto) {
 
         User user = UserMapper.toEntity(dto);
 
-        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        // Encrypt password before saving
+        user.setPassword(
+                passwordEncoder.encode(dto.getPassword())
+        );
 
-        User savedUser = userRepository.save(user);
+        User savedUser =
+                userRepository.save(user);
 
         return UserMapper.toResponseDTO(savedUser);
     }
+
 
     // Get user by ID
     @Override
@@ -51,6 +56,7 @@ public class UserServiceImpl implements UserService {
         return UserMapper.toResponseDTO(user);
     }
 
+
     // Get all users
     @Override
     public List<UserResponseDTO> getAllUsers() {
@@ -61,38 +67,45 @@ public class UserServiceImpl implements UserService {
                 .toList();
     }
 
+
     // Delete user
-   @Override
+    @Override
     public void deleteUser(Long id) {
 
-    User user = userRepository.findById(id)
-            .orElseThrow(() ->
-                    new ResourceNotFoundException(
-                            "User not found with id: " + id
-                    )
-            );
+        User user = userRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "User not found with id: " + id
+                        )
+                );
 
-    userRepository.delete(user);
+        userRepository.delete(user);
     }
 
+
+    // Update user
     @Override
-    public UserResponseDTO updateUser(Long id, UserRequestDTO dto) {
+    public UserResponseDTO updateUser(
+            Long id,
+            UserRequestDTO dto) {
 
-    User user = userRepository.findById(id)
-            .orElseThrow(() ->
-                    new ResourceNotFoundException(
-                            "User not found with id: " + id
-                    )
-            );
+        User user = userRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "User not found with id: " + id
+                        )
+                );
 
-    user.setFirstName(dto.getFirstName());
-    user.setLastName(dto.getLastName());
-    user.setEmail(dto.getEmail());
-    user.setPhoneNumber(dto.getPhoneNumber());
-    user.setRole(dto.getRole());
+        user.setFirstName(dto.getFirstName());
+        user.setLastName(dto.getLastName());
+        user.setEmail(dto.getEmail());
+        user.setPhoneNumber(dto.getPhoneNumber());
+        user.setRole(dto.getRole());
 
-    User updatedUser = userRepository.save(user);
+        User updatedUser =
+                userRepository.save(user);
 
-    return UserMapper.toResponseDTO(updatedUser);
+        return UserMapper.toResponseDTO(
+                updatedUser);
     }
 }

@@ -7,6 +7,7 @@ import com.healthcare.backend.entity.Doctor;
 import com.healthcare.backend.entity.MedicalReport;
 import com.healthcare.backend.entity.Patient;
 import com.healthcare.backend.entity.User;
+import com.healthcare.backend.exception.ResourceNotFoundException;
 import com.healthcare.backend.mapper.MedicalReportMapper;
 import com.healthcare.backend.repository.AppointmentRepository;
 import com.healthcare.backend.repository.DoctorRepository;
@@ -51,9 +52,8 @@ public class MedicalReportServiceImpl
                 appointmentRepository
                         .findById(dto.getAppointmentId())
                         .orElseThrow(() ->
-                                new RuntimeException(
+                                new ResourceNotFoundException(
                                         "Appointment not found"));
-
 
         Authentication authentication =
                 SecurityContextHolder
@@ -65,14 +65,12 @@ public class MedicalReportServiceImpl
         User user = userRepository
                 .findByEmail(email)
                 .orElseThrow(() ->
-                        new RuntimeException(
+                        new ResourceNotFoundException(
                                 "User not found"));
-
 
         String role = user.getRole().name();
 
 
-        // ADMIN can create report for any appointment
         if (role.equals("ADMIN")) {
 
             MedicalReport report =
@@ -88,15 +86,14 @@ public class MedicalReportServiceImpl
         }
 
 
-        // DOCTOR can create report only
-        // for their own appointment
         if (role.equals("DOCTOR")) {
 
-            Doctor doctor = doctorRepository
-                    .findByUserId(user.getId())
-                    .orElseThrow(() ->
-                            new RuntimeException(
-                                    "Doctor record not found"));
+            Doctor doctor =
+                    doctorRepository
+                            .findByUserId(user.getId())
+                            .orElseThrow(() ->
+                                    new ResourceNotFoundException(
+                                            "Doctor record not found"));
 
             if (!appointment.getDoctor()
                     .getId()
@@ -143,9 +140,8 @@ public class MedicalReportServiceImpl
                 medicalReportRepository
                         .findById(id)
                         .orElseThrow(() ->
-                                new RuntimeException(
+                                new ResourceNotFoundException(
                                         "Medical report not found"));
-
 
         Authentication authentication =
                 SecurityContextHolder
@@ -157,14 +153,12 @@ public class MedicalReportServiceImpl
         User user = userRepository
                 .findByEmail(email)
                 .orElseThrow(() ->
-                        new RuntimeException(
+                        new ResourceNotFoundException(
                                 "User not found"));
-
 
         String role = user.getRole().name();
 
 
-        // ADMIN
         if (role.equals("ADMIN")) {
 
             return MedicalReportMapper.toResponseDTO(
@@ -172,14 +166,13 @@ public class MedicalReportServiceImpl
         }
 
 
-        // PATIENT
         if (role.equals("PATIENT")) {
 
             Patient patient =
                     patientRepository
                             .findByUserId(user.getId())
                             .orElseThrow(() ->
-                                    new RuntimeException(
+                                    new ResourceNotFoundException(
                                             "Patient record not found"));
 
             if (!report.getAppointment()
@@ -196,14 +189,13 @@ public class MedicalReportServiceImpl
         }
 
 
-        // DOCTOR
         if (role.equals("DOCTOR")) {
 
             Doctor doctor =
                     doctorRepository
                             .findByUserId(user.getId())
                             .orElseThrow(() ->
-                                    new RuntimeException(
+                                    new ResourceNotFoundException(
                                             "Doctor record not found"));
 
             if (!report.getAppointment()
@@ -230,7 +222,7 @@ public class MedicalReportServiceImpl
 
         if (!medicalReportRepository.existsById(id)) {
 
-            throw new RuntimeException(
+            throw new ResourceNotFoundException(
                     "Medical report not found");
         }
 

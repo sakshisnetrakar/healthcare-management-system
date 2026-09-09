@@ -5,6 +5,7 @@ import com.healthcare.backend.dto.response.DoctorResponseDTO;
 import com.healthcare.backend.entity.Department;
 import com.healthcare.backend.entity.Doctor;
 import com.healthcare.backend.entity.User;
+import com.healthcare.backend.exception.ResourceNotFoundException;
 import com.healthcare.backend.mapper.DoctorMapper;
 import com.healthcare.backend.repository.DepartmentRepository;
 import com.healthcare.backend.repository.DoctorRepository;
@@ -36,27 +37,21 @@ public class DoctorServiceImpl implements DoctorService {
         Doctor doctor =
                 DoctorMapper.toEntity(dto);
 
-
-        // Find User
         User user = userRepository
                 .findById(dto.getUserId())
                 .orElseThrow(() ->
-                        new RuntimeException(
+                        new ResourceNotFoundException(
                                 "User not found"));
 
-
-        // Find Department
         Department department =
                 departmentRepository
                         .findById(dto.getDepartmentId())
                         .orElseThrow(() ->
-                                new RuntimeException(
+                                new ResourceNotFoundException(
                                         "Department not found"));
-
 
         doctor.setUser(user);
         doctor.setDepartment(department);
-
 
         Doctor savedDoctor =
                 doctorRepository.save(doctor);
@@ -82,7 +77,7 @@ public class DoctorServiceImpl implements DoctorService {
         Doctor doctor =
                 doctorRepository.findById(id)
                         .orElseThrow(() ->
-                                new RuntimeException(
+                                new ResourceNotFoundException(
                                         "Doctor not found"));
 
         return DoctorMapper.toResponseDTO(doctor);
@@ -94,7 +89,7 @@ public class DoctorServiceImpl implements DoctorService {
 
         if (!doctorRepository.existsById(id)) {
 
-            throw new RuntimeException(
+            throw new ResourceNotFoundException(
                     "Doctor not found");
         }
 

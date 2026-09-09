@@ -7,10 +7,12 @@ import com.healthcare.backend.entity.Doctor;
 import com.healthcare.backend.entity.Patient;
 import com.healthcare.backend.entity.User;
 import com.healthcare.backend.enums.AppointmentStatus;
+import com.healthcare.backend.exception.ResourceNotFoundException;
 import com.healthcare.backend.mapper.AppointmentMapper;
-import com.healthcare.backend.repository.AppointmentRepository;
+
 import com.healthcare.backend.repository.DoctorRepository;
 import com.healthcare.backend.repository.PatientRepository;
+import com.healthcare.backend.repository.AppointmentRepository;
 import com.healthcare.backend.repository.UserRepository;
 import com.healthcare.backend.service.AppointmentService;
 
@@ -42,7 +44,6 @@ public class AppointmentServiceImpl implements AppointmentService {
     public AppointmentResponseDTO bookAppointment(
             AppointmentRequestDTO dto) {
 
-        // Get logged-in user
         Authentication authentication =
                 SecurityContextHolder
                         .getContext()
@@ -50,29 +51,26 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         String email = authentication.getName();
 
-        User user = userRepository.findByEmail(email)
+        User user = userRepository
+                .findByEmail(email)
                 .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+                        new ResourceNotFoundException(
+                                "User not found"));
 
-
-        // Find patient linked to logged-in user
         Patient patient = patientRepository
                 .findByUserId(user.getId())
                 .orElseThrow(() ->
-                        new RuntimeException(
+                        new ResourceNotFoundException(
                                 "Patient record not found"));
 
-
-        // Find selected doctor
         Doctor doctor = doctorRepository
                 .findById(dto.getDoctorId())
                 .orElseThrow(() ->
-                        new RuntimeException(
+                        new ResourceNotFoundException(
                                 "Doctor not found"));
 
-
-        // Create appointment
-        Appointment appointment = new Appointment();
+        Appointment appointment =
+                new Appointment();
 
         appointment.setAppointmentDate(
                 dto.getAppointmentDate());
@@ -82,16 +80,14 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         appointment.setDoctor(doctor);
 
-        // Patient comes from logged-in user
         appointment.setPatient(patient);
 
-        // Default status
         appointment.setStatus(
                 AppointmentStatus.BOOKED);
 
-
         Appointment savedAppointment =
-                appointmentRepository.save(appointment);
+                appointmentRepository.save(
+                        appointment);
 
         return AppointmentMapper.toResponseDTO(
                 savedAppointment);
@@ -99,7 +95,8 @@ public class AppointmentServiceImpl implements AppointmentService {
 
 
     @Override
-    public List<AppointmentResponseDTO> getAllAppointments() {
+    public List<AppointmentResponseDTO>
+    getAllAppointments() {
 
         return appointmentRepository.findAll()
                 .stream()
@@ -109,15 +106,15 @@ public class AppointmentServiceImpl implements AppointmentService {
 
 
     @Override
-    public AppointmentResponseDTO getAppointmentById(Long id) {
+    public AppointmentResponseDTO
+    getAppointmentById(Long id) {
 
         Appointment appointment =
                 appointmentRepository
                         .findById(id)
                         .orElseThrow(() ->
-                                new RuntimeException(
+                                new ResourceNotFoundException(
                                         "Appointment not found"));
-
 
         Authentication authentication =
                 SecurityContextHolder
@@ -126,16 +123,15 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         String email = authentication.getName();
 
-        User user = userRepository.findByEmail(email)
+        User user = userRepository
+                .findByEmail(email)
                 .orElseThrow(() ->
-                        new RuntimeException(
+                        new ResourceNotFoundException(
                                 "User not found"));
-
 
         String role = user.getRole().name();
 
 
-        // ADMIN can access any appointment
         if (role.equals("ADMIN")) {
 
             return AppointmentMapper.toResponseDTO(
@@ -143,14 +139,14 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
 
 
-        // PATIENT can access only their appointment
         if (role.equals("PATIENT")) {
 
-            Patient patient = patientRepository
-                    .findByUserId(user.getId())
-                    .orElseThrow(() ->
-                            new RuntimeException(
-                                    "Patient record not found"));
+            Patient patient =
+                    patientRepository
+                            .findByUserId(user.getId())
+                            .orElseThrow(() ->
+                                    new ResourceNotFoundException(
+                                            "Patient record not found"));
 
             if (!appointment.getPatient()
                     .getId()
@@ -165,14 +161,14 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
 
 
-        // DOCTOR can access only their appointment
         if (role.equals("DOCTOR")) {
 
-            Doctor doctor = doctorRepository
-                    .findByUserId(user.getId())
-                    .orElseThrow(() ->
-                            new RuntimeException(
-                                    "Doctor record not found"));
+            Doctor doctor =
+                    doctorRepository
+                            .findByUserId(user.getId())
+                            .orElseThrow(() ->
+                                    new ResourceNotFoundException(
+                                            "Doctor record not found"));
 
             if (!appointment.getDoctor()
                     .getId()
@@ -197,7 +193,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         if (!appointmentRepository.existsById(id)) {
 
-            throw new RuntimeException(
+            throw new ResourceNotFoundException(
                     "Appointment not found");
         }
 
