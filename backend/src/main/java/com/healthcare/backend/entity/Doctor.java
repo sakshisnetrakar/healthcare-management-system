@@ -25,7 +25,7 @@ public class Doctor {
     private int experience;
 
     @ManyToOne
-    @JoinColumn(name = "department_id")
+    @JoinColumn(name = "department_id", nullable=false)
     private Department department;
 
     // Link Doctor with User

@@ -14,5 +14,11 @@ public interface DoctorService {
 
     DoctorResponseDTO getDoctorById(Long id);
 
+    List<DoctorResponseDTO> searchBySpecialization(
+            String specialization);
+
+    List<DoctorResponseDTO> getDoctorsByDepartment(
+            Long departmentId);
+
     void deleteDoctor(Long id);
 }

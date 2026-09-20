@@ -39,6 +39,26 @@ public class DoctorController {
         return doctorService.getAllDoctors();
     }
 
+    @PreAuthorize(
+        "hasAnyRole(\"ADMIN\", \"DOCTOR\", \"PATIENT\")")
+    @GetMapping("/search")
+    public List<DoctorResponseDTO> searchBySpecialization(
+        @RequestParam String specialization) {
+
+        return doctorService
+            .searchBySpecialization(specialization);
+    }
+
+
+    @PreAuthorize(
+            "hasAnyRole(\"ADMIN\", \"DOCTOR\", \"PATIENT\")")
+    @GetMapping("/department/{departmentId}")
+    public List<DoctorResponseDTO> getDoctorsByDepartment(
+        @PathVariable Long departmentId) {
+
+        return doctorService
+            .getDoctorsByDepartment(departmentId);
+    }
 
     // ADMIN, DOCTOR and PATIENT can view doctor
     @PreAuthorize(

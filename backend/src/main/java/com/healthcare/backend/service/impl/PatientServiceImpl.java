@@ -123,6 +123,21 @@ public class PatientServiceImpl implements PatientService {
                 "Access denied");
     }
 
+    @Override
+    public PatientResponseDTO getPatientByPhoneNumber(
+                String phoneNumber) {
+
+        Patient patient =
+            patientRepository
+                    .findByPhoneNumber(phoneNumber)
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException(
+                                    "Patient not found with phone number: "
+                                            + phoneNumber));
+
+                return PatientMapper.toResponseDTO(patient);
+        }
+
 
     @Override
     public void deletePatient(Long id) {

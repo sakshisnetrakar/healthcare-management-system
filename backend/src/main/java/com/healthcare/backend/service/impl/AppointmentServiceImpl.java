@@ -273,7 +273,49 @@ public class AppointmentServiceImpl
 
         throw new AccessDeniedException(
                 "Access denied");
-    }
+        }
+
+        // =====================================================
+        // GET APPOINTMENT BY DOCTOR
+        // =====================================================
+
+        @Override
+        public List<AppointmentResponseDTO>
+                getAppointmentsByDoctor(Long doctorId) {
+
+        if (!doctorRepository.existsById(doctorId)) {
+
+        throw new ResourceNotFoundException(
+                "Doctor not found");
+        }
+
+        return appointmentRepository
+            .findByDoctorId(doctorId)
+            .stream()
+            .map(AppointmentMapper::toResponseDTO)
+            .toList();
+        }
+
+        // =====================================================
+        // GET APPOINTMENT BY PATIENT
+        // =====================================================
+
+        @Override
+        public List<AppointmentResponseDTO>
+                getAppointmentsByPatient(Long patientId) {
+
+        if (!patientRepository.existsById(patientId)) {
+
+                throw new ResourceNotFoundException(
+                        "Patient not found");
+        }
+
+        return appointmentRepository
+            .findByPatientId(patientId)
+            .stream()
+            .map(AppointmentMapper::toResponseDTO)
+            .toList();
+        }
 
 
     // =====================================================

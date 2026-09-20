@@ -45,7 +45,30 @@ public class AppointmentController {
         return appointmentService
                 .getAllAppointments();
     }
+    
 
+    @PreAuthorize(
+        "hasAnyRole(\"ADMIN\", \"DOCTOR\")")
+@GetMapping("/doctor/{doctorId}")
+public List<AppointmentResponseDTO>
+getAppointmentsByDoctor(
+        @PathVariable Long doctorId) {
+
+    return appointmentService
+            .getAppointmentsByDoctor(doctorId);
+}
+
+
+        @PreAuthorize(
+                "hasAnyRole(\"ADMIN\", \"DOCTOR\")")
+        @GetMapping("/patient/{patientId}")
+        public List<AppointmentResponseDTO>
+                getAppointmentsByPatient(
+        @PathVariable Long patientId) {
+
+        return appointmentService
+            .getAppointmentsByPatient(patientId);
+        }
 
     // =====================================================
     // GET BY ID

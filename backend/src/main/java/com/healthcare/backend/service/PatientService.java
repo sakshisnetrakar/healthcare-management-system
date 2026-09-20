@@ -14,5 +14,8 @@ public interface PatientService {
 
     PatientResponseDTO getPatientById(Long id);
 
+    PatientResponseDTO getPatientByPhoneNumber(
+            String phoneNumber);
+
     void deletePatient(Long id);
 }

@@ -14,6 +14,12 @@ public interface AppointmentService {
 
     AppointmentResponseDTO getAppointmentById(Long id);
 
+    List<AppointmentResponseDTO> getAppointmentsByDoctor(
+            Long doctorId);
+
+    List<AppointmentResponseDTO> getAppointmentsByPatient(
+            Long patientId);
+
     AppointmentResponseDTO completeAppointment(Long id);
 
     AppointmentResponseDTO cancelAppointment(Long id);

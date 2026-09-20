@@ -38,6 +38,16 @@ public class PatientController {
         return patientService.getAllPatients();
     }
 
+    @PreAuthorize(
+        "hasAnyRole(\"ADMIN\", \"DOCTOR\")")
+    @GetMapping("/search")
+    public PatientResponseDTO getPatientByPhoneNumber(
+        @RequestParam String phoneNumber) {
+
+        return patientService
+            .getPatientByPhoneNumber(phoneNumber);
+    }
+
 
     // ADMIN, DOCTOR and PATIENT can view patient
     @PreAuthorize(

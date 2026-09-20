@@ -83,6 +83,28 @@ public class DoctorServiceImpl implements DoctorService {
         return DoctorMapper.toResponseDTO(doctor);
     }
 
+        @Override
+        public List<DoctorResponseDTO> searchBySpecialization(
+                String specialization) {
+
+        return doctorRepository
+            .findBySpecializationIgnoreCase(specialization)
+            .stream()
+            .map(DoctorMapper::toResponseDTO)
+            .toList();
+        }
+
+
+        @Override
+        public List<DoctorResponseDTO> getDoctorsByDepartment(
+                Long departmentId) {
+
+        return doctorRepository
+            .findByDepartmentId(departmentId)
+            .stream()
+            .map(DoctorMapper::toResponseDTO)
+            .toList();
+        }
 
     @Override
     public void deleteDoctor(Long id) {
