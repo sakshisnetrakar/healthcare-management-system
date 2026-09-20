@@ -87,4 +87,45 @@ class AuthServiceImplTest {
                         "test@gmail.com",
                         "PATIENT");
     }
+
+    @Test
+    void login_shouldThrowException_whenPasswordIsWrong() {
+
+    LoginRequestDTO request = new LoginRequestDTO();
+    request.setEmail("test@gmail.com");
+    request.setPassword("wrongPassword");
+
+    User user = new User();
+
+    user.setId(1L);
+    user.setEmail("test@gmail.com");
+    user.setPassword("encodedPassword");
+    user.setRole(Role.PATIENT);
+    user.setActive(true);
+
+    when(userRepository.findByEmail("test@gmail.com"))
+            .thenReturn(Optional.of(user));
+
+    when(passwordEncoder.matches(
+            "wrongPassword",
+            "encodedPassword"))
+            .thenReturn(false);
+
+    assertThrows(
+            org.springframework.security.authentication
+                    .BadCredentialsException.class,
+            () -> authService.login(request)
+    );
+
+    verify(userRepository)
+            .findByEmail("test@gmail.com");
+
+    verify(passwordEncoder)
+            .matches(
+                    "wrongPassword",
+                    "encodedPassword");
+
+    verify(jwtUtil, never())
+            .generateToken(anyString(), anyString());
+    }
 }
