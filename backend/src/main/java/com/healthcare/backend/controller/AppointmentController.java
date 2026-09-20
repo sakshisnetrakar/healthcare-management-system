@@ -20,7 +20,10 @@ public class AppointmentController {
     private AppointmentService appointmentService;
 
 
-    // Only PATIENT can book
+    // =====================================================
+    // BOOK
+    // =====================================================
+
     @PreAuthorize("hasRole(\"PATIENT\")")
     @PostMapping
     public AppointmentResponseDTO bookAppointment(
@@ -30,33 +33,75 @@ public class AppointmentController {
     }
 
 
-    // Only ADMIN can view all
+    // =====================================================
+    // GET ALL
+    // =====================================================
+
     @PreAuthorize("hasRole(\"ADMIN\")")
     @GetMapping
-    public List<AppointmentResponseDTO> getAllAppointments() {
+    public List<AppointmentResponseDTO>
+    getAllAppointments() {
 
-        return appointmentService.getAllAppointments();
+        return appointmentService
+                .getAllAppointments();
     }
 
 
-    // ADMIN, DOCTOR and PATIENT
+    // =====================================================
+    // GET BY ID
+    // =====================================================
+
     @PreAuthorize(
             "hasAnyRole(\"ADMIN\", \"DOCTOR\", \"PATIENT\")")
     @GetMapping("/{id}")
     public AppointmentResponseDTO getAppointmentById(
             @PathVariable Long id) {
 
-        return appointmentService.getAppointmentById(id);
+        return appointmentService
+                .getAppointmentById(id);
     }
 
 
-    // Only ADMIN can delete
+    // =====================================================
+    // COMPLETE
+    // =====================================================
+
+    @PreAuthorize("hasRole(\"DOCTOR\")")
+    @PutMapping("/{id}/complete")
+    public AppointmentResponseDTO completeAppointment(
+            @PathVariable Long id) {
+
+        return appointmentService
+                .completeAppointment(id);
+    }
+
+
+    // =====================================================
+    // CANCEL
+    // =====================================================
+
+    @PreAuthorize(
+            "hasAnyRole(\"ADMIN\", \"DOCTOR\", \"PATIENT\")")
+    @PutMapping("/{id}/cancel")
+    public AppointmentResponseDTO cancelAppointment(
+            @PathVariable Long id) {
+
+        return appointmentService
+                .cancelAppointment(id);
+    }
+
+
+    // =====================================================
+    // DELETE
+    // =====================================================
+
     @PreAuthorize("hasRole(\"ADMIN\")")
     @DeleteMapping("/{id}")
     public String deleteAppointment(
             @PathVariable Long id) {
 
-        appointmentService.deleteAppointment(id);
+        appointmentService
+                .deleteAppointment(id);
 
         return "Appointment deleted successfully";
     }

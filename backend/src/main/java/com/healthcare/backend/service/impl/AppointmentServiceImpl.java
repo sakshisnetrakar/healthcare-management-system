@@ -9,10 +9,9 @@ import com.healthcare.backend.entity.User;
 import com.healthcare.backend.enums.AppointmentStatus;
 import com.healthcare.backend.exception.ResourceNotFoundException;
 import com.healthcare.backend.mapper.AppointmentMapper;
-
+import com.healthcare.backend.repository.AppointmentRepository;
 import com.healthcare.backend.repository.DoctorRepository;
 import com.healthcare.backend.repository.PatientRepository;
-import com.healthcare.backend.repository.AppointmentRepository;
 import com.healthcare.backend.repository.UserRepository;
 import com.healthcare.backend.service.AppointmentService;
 
@@ -22,10 +21,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
-public class AppointmentServiceImpl implements AppointmentService {
+public class AppointmentServiceImpl
+        implements AppointmentService {
 
     @Autowired
     private AppointmentRepository appointmentRepository;
@@ -40,10 +42,42 @@ public class AppointmentServiceImpl implements AppointmentService {
     private DoctorRepository doctorRepository;
 
 
+    // =====================================================
+    // BOOK APPOINTMENT
+    // =====================================================
+
     @Override
     public AppointmentResponseDTO bookAppointment(
             AppointmentRequestDTO dto) {
 
+        LocalDate appointmentDate =
+                dto.getAppointmentDate();
+
+        LocalTime appointmentTime =
+                dto.getAppointmentTime();
+
+        LocalDate today = LocalDate.now();
+        LocalTime currentTime = LocalTime.now();
+
+
+        // Check date
+        if (appointmentDate.isBefore(today)) {
+
+            throw new IllegalArgumentException(
+                    "Appointment date cannot be in the past");
+        }
+
+
+        // Check time if appointment is today
+        if (appointmentDate.equals(today)
+                && appointmentTime.isBefore(currentTime)) {
+
+            throw new IllegalArgumentException(
+                    "Appointment time cannot be in the past");
+        }
+
+
+        // Get logged-in user
         Authentication authentication =
                 SecurityContextHolder
                         .getContext()
@@ -51,32 +85,66 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         String email = authentication.getName();
 
+
         User user = userRepository
                 .findByEmail(email)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "User not found"));
 
-        Patient patient = patientRepository
-                .findByUserId(user.getId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Patient record not found"));
 
-        Doctor doctor = doctorRepository
-                .findById(dto.getDoctorId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Doctor not found"));
+        // Check active user
+        if (!Boolean.TRUE.equals(user.getActive())) {
 
+            throw new AccessDeniedException(
+                    "Inactive users cannot book appointments");
+        }
+
+
+        // Find patient
+        Patient patient =
+                patientRepository
+                        .findByUserId(user.getId())
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Patient record not found"));
+
+
+        // Find doctor
+        Doctor doctor =
+                doctorRepository
+                        .findById(dto.getDoctorId())
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Doctor not found"));
+
+
+        // Check doctor availability
+        boolean alreadyBooked =
+                appointmentRepository
+                        .existsByDoctorIdAndAppointmentDateAndAppointmentTime(
+                                doctor.getId(),
+                                appointmentDate,
+                                appointmentTime
+                        );
+
+
+        if (alreadyBooked) {
+
+            throw new IllegalArgumentException(
+                    "Doctor is already booked for this date and time");
+        }
+
+
+        // Create appointment
         Appointment appointment =
                 new Appointment();
 
         appointment.setAppointmentDate(
-                dto.getAppointmentDate());
+                appointmentDate);
 
         appointment.setAppointmentTime(
-                dto.getAppointmentTime());
+                appointmentTime);
 
         appointment.setDoctor(doctor);
 
@@ -85,14 +153,20 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointment.setStatus(
                 AppointmentStatus.BOOKED);
 
+
         Appointment savedAppointment =
                 appointmentRepository.save(
                         appointment);
+
 
         return AppointmentMapper.toResponseDTO(
                 savedAppointment);
     }
 
+
+    // =====================================================
+    // GET ALL APPOINTMENTS
+    // =====================================================
 
     @Override
     public List<AppointmentResponseDTO>
@@ -105,6 +179,10 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
 
+    // =====================================================
+    // GET APPOINTMENT BY ID
+    // =====================================================
+
     @Override
     public AppointmentResponseDTO
     getAppointmentById(Long id) {
@@ -116,6 +194,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                                 new ResourceNotFoundException(
                                         "Appointment not found"));
 
+
         Authentication authentication =
                 SecurityContextHolder
                         .getContext()
@@ -123,15 +202,18 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         String email = authentication.getName();
 
+
         User user = userRepository
                 .findByEmail(email)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "User not found"));
 
+
         String role = user.getRole().name();
 
 
+        // ADMIN
         if (role.equals("ADMIN")) {
 
             return AppointmentMapper.toResponseDTO(
@@ -139,6 +221,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
 
 
+        // PATIENT
         if (role.equals("PATIENT")) {
 
             Patient patient =
@@ -148,6 +231,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                                     new ResourceNotFoundException(
                                             "Patient record not found"));
 
+
             if (!appointment.getPatient()
                     .getId()
                     .equals(patient.getId())) {
@@ -156,11 +240,13 @@ public class AppointmentServiceImpl implements AppointmentService {
                         "You can access only your own appointments");
             }
 
+
             return AppointmentMapper.toResponseDTO(
                     appointment);
         }
 
 
+        // DOCTOR
         if (role.equals("DOCTOR")) {
 
             Doctor doctor =
@@ -170,6 +256,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                                     new ResourceNotFoundException(
                                             "Doctor record not found"));
 
+
             if (!appointment.getDoctor()
                     .getId()
                     .equals(doctor.getId())) {
@@ -177,6 +264,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                 throw new AccessDeniedException(
                         "You can access only your own appointments");
             }
+
 
             return AppointmentMapper.toResponseDTO(
                     appointment);
@@ -187,6 +275,217 @@ public class AppointmentServiceImpl implements AppointmentService {
                 "Access denied");
     }
 
+
+    // =====================================================
+    // COMPLETE APPOINTMENT
+    // =====================================================
+
+    @Override
+    public AppointmentResponseDTO
+    completeAppointment(Long id) {
+
+        Appointment appointment =
+                appointmentRepository
+                        .findById(id)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Appointment not found"));
+
+
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        String email = authentication.getName();
+
+
+        User user = userRepository
+                .findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "User not found"));
+
+
+        // Only the doctor assigned to this
+        // appointment can complete it
+        Doctor doctor =
+                doctorRepository
+                        .findByUserId(user.getId())
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Doctor record not found"));
+
+
+        if (!appointment.getDoctor()
+                .getId()
+                .equals(doctor.getId())) {
+
+            throw new AccessDeniedException(
+                    "You can complete only your own appointments");
+        }
+
+
+        // Appointment must be BOOKED
+        if (appointment.getStatus()
+                != AppointmentStatus.BOOKED) {
+
+            throw new IllegalArgumentException(
+                    "Only booked appointments can be completed");
+        }
+
+
+        appointment.setStatus(
+                AppointmentStatus.COMPLETED);
+
+
+        Appointment updatedAppointment =
+                appointmentRepository.save(
+                        appointment);
+
+
+        return AppointmentMapper.toResponseDTO(
+                updatedAppointment);
+    }
+
+
+    // =====================================================
+    // CANCEL APPOINTMENT
+    // =====================================================
+
+    @Override
+    public AppointmentResponseDTO
+    cancelAppointment(Long id) {
+
+        Appointment appointment =
+                appointmentRepository
+                        .findById(id)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Appointment not found"));
+
+
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        String email = authentication.getName();
+
+
+        User user = userRepository
+                .findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "User not found"));
+
+
+        String role = user.getRole().name();
+
+
+        // ADMIN can cancel any appointment
+        if (role.equals("ADMIN")) {
+
+            appointment.setStatus(
+                    AppointmentStatus.CANCELLED);
+
+            Appointment updatedAppointment =
+                    appointmentRepository.save(
+                            appointment);
+
+            return AppointmentMapper.toResponseDTO(
+                    updatedAppointment);
+        }
+
+
+        // PATIENT can cancel only their own appointment
+        if (role.equals("PATIENT")) {
+
+            Patient patient =
+                    patientRepository
+                            .findByUserId(user.getId())
+                            .orElseThrow(() ->
+                                    new ResourceNotFoundException(
+                                            "Patient record not found"));
+
+
+            if (!appointment.getPatient()
+                    .getId()
+                    .equals(patient.getId())) {
+
+                throw new AccessDeniedException(
+                        "You can cancel only your own appointments");
+            }
+
+
+            if (appointment.getStatus()
+                    != AppointmentStatus.BOOKED) {
+
+                throw new IllegalArgumentException(
+                        "Only booked appointments can be cancelled");
+            }
+
+
+            appointment.setStatus(
+                    AppointmentStatus.CANCELLED);
+
+            Appointment updatedAppointment =
+                    appointmentRepository.save(
+                            appointment);
+
+            return AppointmentMapper.toResponseDTO(
+                    updatedAppointment);
+        }
+
+
+        // DOCTOR can cancel their own appointment
+        if (role.equals("DOCTOR")) {
+
+            Doctor doctor =
+                    doctorRepository
+                            .findByUserId(user.getId())
+                            .orElseThrow(() ->
+                                    new ResourceNotFoundException(
+                                            "Doctor record not found"));
+
+
+            if (!appointment.getDoctor()
+                    .getId()
+                    .equals(doctor.getId())) {
+
+                throw new AccessDeniedException(
+                        "You can cancel only your own appointments");
+            }
+
+
+            if (appointment.getStatus()
+                    != AppointmentStatus.BOOKED) {
+
+                throw new IllegalArgumentException(
+                        "Only booked appointments can be cancelled");
+            }
+
+
+            appointment.setStatus(
+                    AppointmentStatus.CANCELLED);
+
+            Appointment updatedAppointment =
+                    appointmentRepository.save(
+                            appointment);
+
+            return AppointmentMapper.toResponseDTO(
+                    updatedAppointment);
+        }
+
+
+        throw new AccessDeniedException(
+                "Access denied");
+    }
+
+
+    // =====================================================
+    // DELETE APPOINTMENT
+    // =====================================================
 
     @Override
     public void deleteAppointment(Long id) {
