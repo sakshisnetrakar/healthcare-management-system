@@ -1,3 +1,5 @@
+import Login from "./pages/Login";
+import Patients from "./pages/Patients";
 import { useState } from "react";
 import {
   BrowserRouter,
@@ -23,7 +25,7 @@ import {
   X,
 } from "lucide-react";
 
-import Login from "./pages/Login";
+
 import "./App.css";
 
 const navigation = [
@@ -158,160 +160,166 @@ function ProtectedDashboard() {
         </header>
 
         <section className="content">
-          <div className="welcome">
-            <div>
-              <p className="eyebrow">HEALTHCARE OVERVIEW</p>
-
-              <h1>
-                {activePage === "Dashboard"
-                  ? "Welcome back!"
-                  : activePage}
-              </h1>
-
-              <p className="subtitle">
-                Manage your hospital operations from one place.
-              </p>
-            </div>
-
-            <div className="date-label">
-              <Activity size={17} />
-              Healthcare Management
-            </div>
-          </div>
-
-          {activePage === "Dashboard" ? (
+          {activePage === "Patients" ? (
+            <Patients />
+          ) : (
             <>
-              <div className="stats-grid">
-                {stats.map(({ title, icon: Icon }) => (
-                  <div className="stat-card" key={title}>
-                    <div className="stat-top">
-                      <span>{title}</span>
+              <div className="welcome">
+                <div>
+                  <p className="eyebrow">HEALTHCARE OVERVIEW</p>
 
-                      <div className="stat-icon">
-                        <Icon size={21} />
+                  <h1>
+                    {activePage === "Dashboard"
+                      ? "Welcome back!"
+                      : activePage}
+                  </h1>
+
+                  <p className="subtitle">
+                    Manage your hospital operations from one place.
+                  </p>
+                </div>
+
+                <div className="date-label">
+                  <Activity size={17} />
+                  Healthcare Management
+                </div>
+              </div>
+
+              {activePage === "Dashboard" ? (
+                <>
+                  <div className="stats-grid">
+                    {stats.map(({ title, icon: Icon }) => (
+                      <div className="stat-card" key={title}>
+                        <div className="stat-top">
+                          <span>{title}</span>
+
+                          <div className="stat-icon">
+                            <Icon size={21} />
+                          </div>
+                        </div>
+
+                        <h2>—</h2>
+                        <p>Awaiting backend integration</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="dashboard-grid">
+                    <section className="panel activity-panel">
+                      <div className="panel-heading">
+                        <div>
+                          <h3>Hospital Overview</h3>
+                          <p>Your management workspace</p>
+                        </div>
+
+                        <Activity size={21} />
+                      </div>
+
+                      <div className="overview-placeholder">
+                        <div className="overview-icon">
+                          <Activity size={32} />
+                        </div>
+
+                        <h3>Your hospital at a glance</h3>
+
+                        <p>
+                          Patient, doctor and appointment statistics will
+                          appear here after connecting the backend APIs.
+                        </p>
+                      </div>
+                    </section>
+
+                    <section className="panel quick-panel">
+                      <div className="panel-heading">
+                        <div>
+                          <h3>Quick Actions</h3>
+                          <p>Open a management section</p>
+                        </div>
+                      </div>
+
+                      <div className="quick-actions">
+                        {[
+                          ["Patients", Users],
+                          ["Doctors", UserRound],
+                          ["Appointments", CalendarDays],
+                          ["Departments", Building2],
+                        ].map(([name, Icon]) => (
+                          <button
+                            className="quick-action"
+                            key={name}
+                            onClick={() => selectPage(name)}
+                          >
+                            <span className="quick-icon">
+                              <Icon size={19} />
+                            </span>
+
+                            <span>{name}</span>
+                            <span className="arrow">→</span>
+                          </button>
+                        ))}
+                      </div>
+                    </section>
+                  </div>
+
+                  <section className="panel bottom-panel">
+                    <div className="panel-heading">
+                      <div>
+                        <h3>System Information</h3>
+                        <p>Application status</p>
                       </div>
                     </div>
 
-                    <h2>—</h2>
-                    <p>Awaiting backend integration</p>
-                  </div>
-                ))}
-              </div>
+                    <div className="status-row">
+                      <div className="status-item">
+                        <Activity size={19} />
 
-              <div className="dashboard-grid">
-                <section className="panel activity-panel">
-                  <div className="panel-heading">
-                    <div>
-                      <h3>Hospital Overview</h3>
-                      <p>Your management workspace</p>
+                        <div>
+                          <strong>React Frontend</strong>
+                          <span>Running</span>
+                        </div>
+                      </div>
+
+                      <div className="status-item">
+                        <Activity size={19} />
+
+                        <div>
+                          <strong>JWT Session</strong>
+                          <span>Token present</span>
+                        </div>
+                      </div>
                     </div>
+                  </section>
+                </>
+              ) : (
+                <section className="panel page-placeholder">
+                  <div className="overview-icon">
+                    {(() => {
+                      const item = navigation.find(
+                        (entry) => entry.name === activePage
+                      );
 
-                    <Activity size={21} />
+                      const Icon = item?.icon || FileText;
+
+                      return <Icon size={32} />;
+                    })()}
                   </div>
 
-                  <div className="overview-placeholder">
-                    <div className="overview-icon">
-                      <Activity size={32} />
-                    </div>
+                  <h2>{activePage}</h2>
 
-                    <h3>Your hospital at a glance</h3>
+                  <p>
+                    This section is ready for its management interface
+                    and Spring Boot API integration.
+                  </p>
 
-                    <p>
-                      Patient, doctor and appointment statistics will
-                      appear here after connecting the backend APIs.
-                    </p>
-                  </div>
+                  <button
+                    className="primary-button"
+                    onClick={() => selectPage("Dashboard")}
+                  >
+                    Back to Dashboard
+                  </button>
                 </section>
-
-                <section className="panel quick-panel">
-                  <div className="panel-heading">
-                    <div>
-                      <h3>Quick Actions</h3>
-                      <p>Open a management section</p>
-                    </div>
-                  </div>
-
-                  <div className="quick-actions">
-                    {[
-                      ["Patients", Users],
-                      ["Doctors", UserRound],
-                      ["Appointments", CalendarDays],
-                      ["Departments", Building2],
-                    ].map(([name, Icon]) => (
-                      <button
-                        className="quick-action"
-                        key={name}
-                        onClick={() => selectPage(name)}
-                      >
-                        <span className="quick-icon">
-                          <Icon size={19} />
-                        </span>
-
-                        <span>{name}</span>
-                        <span className="arrow">→</span>
-                      </button>
-                    ))}
-                  </div>
-                </section>
-              </div>
-
-              <section className="panel bottom-panel">
-                <div className="panel-heading">
-                  <div>
-                    <h3>System Information</h3>
-                    <p>Application status</p>
-                  </div>
-                </div>
-
-                <div className="status-row">
-                  <div className="status-item">
-                    <Activity size={19} />
-
-                    <div>
-                      <strong>React Frontend</strong>
-                      <span>Running</span>
-                    </div>
-                  </div>
-
-                  <div className="status-item">
-                    <Activity size={19} />
-
-                    <div>
-                      <strong>JWT Session</strong>
-                      <span>Token present</span>
-                    </div>
-                  </div>
-                </div>
-              </section>
+              )}
             </>
-          ) : (
-            <section className="panel page-placeholder">
-              <div className="overview-icon">
-                {(() => {
-                  const item = navigation.find(
-                    (entry) => entry.name === activePage
-                  );
-
-                  const Icon = item?.icon || FileText;
-
-                  return <Icon size={32} />;
-                })()}
-              </div>
-
-              <h2>{activePage}</h2>
-
-              <p>
-                This section is ready for its management interface
-                and Spring Boot API integration.
-              </p>
-
-              <button
-                className="primary-button"
-                onClick={() => selectPage("Dashboard")}
-              >
-                Back to Dashboard
-              </button>
-            </section>
           )}
         </section>
       </main>
