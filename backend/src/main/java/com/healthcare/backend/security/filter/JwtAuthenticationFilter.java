@@ -81,8 +81,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .setAuthentication(authentication);
 
         } catch (Exception e) {
+        System.err.println(
+                "JWT authentication failed: "
+                + e.getClass().getSimpleName()
+                + " - "
+                + e.getMessage()
+                );
 
-            SecurityContextHolder.clearContext();
+                SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);
