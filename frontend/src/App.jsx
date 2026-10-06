@@ -1,5 +1,7 @@
 import Login from "./pages/Login";
 import Patients from "./pages/Patients";
+import Doctors from "./pages/Doctors";
+
 import { useState } from "react";
 import {
   BrowserRouter,
@@ -162,8 +164,10 @@ function ProtectedDashboard() {
         <section className="content">
           {activePage === "Patients" ? (
             <Patients />
-          ) : (
-            <>
+              ) : activePage === "Doctors" ? (
+  <Doctors />
+                ) : (
+              <>
               <div className="welcome">
                 <div>
                   <p className="eyebrow">HEALTHCARE OVERVIEW</p>

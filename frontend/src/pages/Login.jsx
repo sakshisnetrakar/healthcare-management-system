@@ -27,7 +27,7 @@ function Login() {
       return;
     }
 
-    sessionStorage.setItem("token", token);
+    sessionStorage.setItem("token", response.data.token);
 
     alert("Login successful!");
     navigate("/dashboard");
